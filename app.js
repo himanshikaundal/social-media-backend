@@ -10,6 +10,8 @@ require('dotenv').config();
 const { error, success } = require('./utils/responseHandler');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
+const feedRouter=require('./routes/feed');
+const commentRouter=require('./routes/comment');
 
 mongoose.connect(process.env.DB_STRING);
 
@@ -26,8 +28,12 @@ app.use((_, res, next) => {
     next();
 });
 
-app.use('/', indexRouter);
-app.use('/', usersRouter);
+app.use('/api', indexRouter);
+app.use('/api', usersRouter);
+app.use('/api',feedRouter);
+app.use('/api/feeds',feedRouter);
+app.use('/api',commentRouter);
+
 
 app.use((req, res, next) => {
     return next(createError(404));
