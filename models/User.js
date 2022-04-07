@@ -67,6 +67,6 @@ const userSchema = new mongoose.Schema({
     dob:{
         type:Date
     }  
-});
+},{timestamps:true});
 
 module.exports = mongoose.model('User', userSchema);

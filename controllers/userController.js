@@ -2,7 +2,8 @@ const createError = require("http-errors");
 const jsonwebtoken = require("jsonwebtoken");
 const Joi = require("joi");
 const bcryptjs = require("bcryptjs");
-const sgMail = require('@sendgrid/mail');
+const sgMail = require("@sendgrid/mail");
+const crypto = require('crypto');
 
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
@@ -12,7 +13,6 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 module.exports = {
   login: async (req, res, next) => {
     try {
-      
       const schema = Joi.object({
         username: Joi.alternatives(
           Joi.string().alphanum().min(5).max(255).required(),
@@ -25,16 +25,22 @@ module.exports = {
       const { value, error } = schema.validate(req.body);
       if (error) return next(createError(400, error.message));
 
-      const user = await User.findOne().or([{ email: value.username },{username: value.username}]);
+      const user = await User.findOne().or([
+        { email: value.username },
+        { username: value.username },
+      ]);
       if (!user)
         return next(createError(400, "Username and password is invalid"));
 
       console.log(value.username);
       // db connection
-      const isPasswordMatched = await bcryptjs.compareSync(value.password,user.password); // hash will be comes from db
+      const isPasswordMatched = await bcryptjs.compareSync(
+        value.password,
+        user.password
+      ); // hash will be comes from db
       if (!isPasswordMatched)
         return next(createError(400, "Username and password is invalid"));
-
+      delete user.password
       const token = jsonwebtoken.sign(
         {
           data: user, // user object
@@ -43,12 +49,11 @@ module.exports = {
         { expiresIn: process.env.JWT_EXPIRY }
       );
 
-      res.header('x-auth-token',token);
+      res.header("x-auth-token", token);
       res.success({
         token: token,
         user: user,
       });
-      
     } catch (error) {
       return next(createError(500, error.message));
     }
@@ -86,110 +91,100 @@ module.exports = {
     }
   },
   forgotpassword: async (req, res, next) => {
-     const {email} = req.body.email;
-     const user= User.findOne({where:{email}});
-    
-     if(!user) return next(createError(500,'User not found'));
-    const link = `http://localhost:4000/reset-password/${user.id}/${token}`;
-    const msg = {
-        to: 'email',
-        from: 'himanshi.kaundal@tothenew.com', 
-        subject: 'Password re-set email',
-        
-        html: `<strong>click the link to reset the password ${link} </strong>`,
-      };
-      
-      sgMail
-        .send(msg)
-        .then(() => {}, error => {
-          console.error(error);
-      
-          if (error.response) {
-            console.error(error.response.body)
-          }
-        });
-    
-
-    const secret = process.env.RESET_PASSWORD_KEY + user.password;
-    const payload = { email: user.email, id: user.id };
-    const token = jsonwebtoken.sign(payload, secret, { expiresIn: "20m" });
-  },
-  editProfile: async(req,res,next)=>{
-    const schema = Joi.object({
-      name: Joi.string().min(5).max(255).required(),
-      email: Joi.string().min(5).max(255).required(),
-      profilePicture:Joi.string().max(1),
-      coverPicture:Joi.string().max(1),
-      headline:Joi.string().max(255),
-      state:Joi.string().max(20),
-      country:Joi.string().max(20),
-      city:Joi.string().max(20),
-      website:Joi.string().max(50),
-      gender:Joi.string,
-      dob:Joi.date()
-
-      
-    });
-    const { error,value } = schema.validate(req.body);
-    if (error) return next(error);
     try{
-      const result =await User.findByIdAndUpdate(req.params.id,value ,{new:true});
-      await result.save();
-    res.success(result);
+      const schema = Joi.object({
+        email: Joi.string().min(5).max(255).required(),
+        
+      });
+
+    const { error } = schema.validate(req.body);
+    if (error) return next(createError(400, error.message));
+
+    const { email } = req.body;
+    
+    const user = await  User.findOne({ where: { email } });
+
+    if (!user) return next(createError(500, "User not found"));
+    console.log(user);
+    const link = `http://localhost:3000/reset-password/${user.id}/${token}`;
+    const msg = {
+      to: email,
+      from: "himanshi.kaundal@tothenew.com",
+      subject: "Password re-set email",
+
+      html: `<strong>click the link to reset the password ${link}</strong>`,
+    };
+
+    await sgMail.send(msg)
+    res.success(null,'link has been successfully shared with you')
     }catch(error){
       return next(createError(500, error.message));
     }
-    
-    
-  },
-  getMe: async(req,res,next) =>{
-    const mydetails = await User.find().select('-password');
-    res.success(mydetails);
 
+    const token = crypto.randomBytes(48).toString('hex');    
 
   },
-  changePassword: async(req,res,next)=>{
-    try {
-
-      const schema = Joi.object({
-        oldPassword:Joi.string().required(),
-        newPassword:Joi.string().required(),
-        confirmPassword:Joi.any().valid(Joi.ref('newPassword')).required()
-        
-      });
-      const {error,value}=schema.validate(req.body);
   
-      const token = req.header('x-auth-token');
-      const decoded = jsonwebtoken.verify(token,'SocialMedia');
-      req.user=decoded;
-      const currentUser = req.user;
-      if(bcryptjs.compare(value.oldPassword,currentUser.password))
-      {
-        const salt = await bcryptjs.genSalt(10);
-        const hashed = await bcryptjs.hash(value.newPassword, salt);
-        await User.updateOne({_id:currentUser._id},{password:hashed})
-
-        const userData= await User.findOne({_id:currentUser._id})
-
-        const secret = process.env.RESET_PASSWORD_KEY +value.newPassword ;
-    
-        const payload = userData;
-        const token = jsonwebtoken.sign(payload, secret, { expiresIn: "20m" });
-        
-        res.success({
+  resetpassword:async(req,res)=>{
+    const{id,token}=req.body;
+    //verify token
+    let validId = await SignUp.findOne({_id:req.body.id});
+    if(!validId) return res.status(400).res.send('invalid id'); 
+  },
+  editProfile: async (req, res, next) => {
+    const schema = Joi.object({
+      name: Joi.string().min(5).max(255).required(),
+      email: Joi.string().min(5).max(255).required(),
+      profilePicture: Joi.string().max(1),
+      coverPicture: Joi.string().max(1),
+      headline: Joi.string().max(255),
+      state: Joi.string().max(20),
+      country: Joi.string().max(20),
+      city: Joi.string().max(20),
+      website: Joi.string().max(50),
+      gender: Joi.string,
+      dob: Joi.date(),
+    });
+    const { error, value } = schema.validate(req.body);
+    if (error) return next(error);
+    try {
+      const result = await User.findByIdAndUpdate(req.params.id, value, {
+        new: true,
+      });
+      await result.save();
+      res.success(result);
+    } catch (error) {
+      return next(createError(500, error.message));
+    }
+  },
+  getMe: async (req, res, next) => {
+    const mydetails = await User.find().select("-password");
+    res.success(mydetails);
+  },
+  changePassword: async (req, res, next) => {
+    try {
+      const schema = Joi.object({
+        oldPassword: Joi.string().required(),
+        newPassword: Joi.string().required(),
+        confirmPassword: Joi.any().valid(Joi.ref("newPassword")).required(),
+      });
+      const { error, value } = schema.validate(req.body);
+      const currentUser =req.loggedInUser;
+      const userData = await User.findOne({ _id: currentUser._id });
+      if (!bcryptjs.compare(value.oldPassword, currentUser.password)) {
+        return next(createError(500, error.message));
+      } 
+      const salt = await bcryptjs.genSalt(10);
+      const hashed = await bcryptjs.hash(value.newPassword, salt);
+      await User.updateOne({ _id: currentUser._id }, { password: hashed });
+      res.success({
           token: token,
           user: userData,
-        });
+      });
 
-      }
-      else{
-        return next(createError(500, error.message));
-      }
-  
-      
+      console.log(req.loggedInUser);
     } catch (error) {
-      return next(createError(500, error.message));      
+      return next(createError(500, error.message));
     }
-    
-  }
+  },
 };

@@ -1,30 +1,28 @@
-const createError = require('http-errors');
-const Joi = require('joi');
-const Comment = require('../models/Comment');
-const Feed = require('../models/Feed')
+const createError = require("http-errors");
+const Joi = require("joi");
+const Comment = require("../models/Comment");
+const Feed = require("../models/Feed");
 
 module.exports = {
+  createComment: async (req, res, next) => {
+    try {
+      const schema = Joi.object({
+        comment: Joi.string().required(),
+        feed_id: Joi.string().required(),
+        comment_id: Joi.string(),
+      });
 
-  createComment: async(req, res, next) => {
-try {
-        const schema=Joi.object({
-          comment:Joi.string().required(),
-          feed_id:Joi.string().required(),
-          comment_id:Joi.string()
-        })
+      const { error, value } = schema.validate(req.body);
+      if (error) return next(error);
 
-        const{error,value}=schema.validate(req.body);
-        if(error) return next(error);
-      
       const comment = new Comment({
         comment: value.comment,
-        feed_id:value.feed_id,
-        comment_id:value.comment_id
- })
+        feed_id: value.feed_id,
+        comment_id: value.comment_id,
+      });
       const result = await comment.save();
       res.success(result);
-    }
-    catch (error) {
+    } catch (error) {
       return next(error);
     }
   },
@@ -37,13 +35,4 @@ try {
   //     .populate('Feed')
   //   res.success(list);
   // },
-
-  
-
-
-
-
-
-
-}
-
+};
