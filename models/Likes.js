@@ -1,20 +1,19 @@
 const mongoose= require('mongoose');
 const Feed=require('./Feed');
-const comment=require('./Comment');
+const Comment=require('./Comment');
 const likeSchema = new mongoose.Schema({
     reactions:{
-        type:[Number],
-        required:false
+        type:mongoose.Schema.Types.ObjectId
     },
     feedId:{
         type:mongoose.Schema.Types.ObjectId,
         required:true,
-        ref:Feed
+        ref:'Feed'
     },
     commentId:{
         type:mongoose.Schema.Types.ObjectId,
         required:false,
-        ref:comment
+        ref:'Comment'
     }
     
     

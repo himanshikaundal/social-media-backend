@@ -61,7 +61,7 @@ module.exports = {
 
             const { value, error } = schema.validate(req.body);
 
-            const result = await Feed.findByIdAndUpdate(req.params.id,value,{new:true})
+            const result = await Feed.findByIdAndUpdate(req.params.id, value, { new: true })
 
             await result.save();
             res.success(result);
@@ -80,7 +80,7 @@ module.exports = {
 
 
         try {
-            const feed=await Feed.findByIdAndDelete(req.params.id)
+            const feed = await Feed.findByIdAndDelete(req.params.id)
             res.success(feed);
 
         }

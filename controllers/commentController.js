@@ -27,12 +27,45 @@ module.exports = {
     }
   },
 
-  // listComment: (req, res, next) => {
-  //   if(req.params.id===Feed._id)
-  //   const comment = await Comment.findById(req.params.id);
-  //   if (!comment) return next(createError(500, 'unable to find comment found'));
-  //   const list = await comment.find()
-  //     .populate('Feed')
-  //   res.success(list);
-  // },
-};
+  listComment: async (req, res, next) => {
+    try {
+      const comments = await Comment.find({ feed_id: req.params.id }).select('comment -_id');
+      const user_id = req.loggedInUser._id;
+      res.success({ comments, });
+    }
+
+    catch (error) {
+      res.error(error);
+    }
+
+
+  },
+
+  update: async (req, res, next) => {
+
+    try {
+      const result = await Comment.findByIdAndUpdate(req.params.id, { comment: req.body.comment });
+      await result.save();
+      res.success(result);
+    }
+    catch (error) {
+      res.error(error);
+
+    }
+
+  },
+  delete: async (req, res, next) => {
+    try {
+      const result = await Comment.deleteOne({ _id: req.params.id });
+      res.success(result);
+    }
+    catch (error) {
+      res.error(error);
+    }
+
+  }
+
+
+}
+
+  ;

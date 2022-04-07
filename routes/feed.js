@@ -15,7 +15,7 @@ router.route('/feeds').post(feedController.create)
     .get(feedController.getAll)
   
 
-router.route('/:id')
+router.route('/feeds/:id')
     .put(feedController.update)
     .delete(feedController.delete)
 
