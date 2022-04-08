@@ -32,7 +32,6 @@ app.use((_, res, next) => {
 app.use('/api', indexRouter);
 app.use('/api', usersRouter);
 app.use('/api',feedRouter);
-app.use('/api/feeds',feedRouter);
 app.use('/api',commentRouter);
 
 
