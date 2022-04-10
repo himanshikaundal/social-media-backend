@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const tokenSchema = new mongoose.Schema({
@@ -9,8 +10,11 @@ const tokenSchema = new mongoose.Schema({
         min:10,
         max:255
       },
-      token: String,
-      expirt:{ type: Date, expires: '20m', default: Date.now }
+      token:{
+        type:String,
+        required:true
+      },
+      expires:{ type: Date, expires: '20m', default: Date.now }
       
 },{timestamps:true});
 

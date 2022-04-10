@@ -1,5 +1,6 @@
 const express = require('express');
 const { getAll } = require('../controllers/feedController');
+const auth=require('../middlewares/auth');
 
 const feedController = require('../controllers/feedController');
 
@@ -11,12 +12,12 @@ const router = express.Router();
 // router.put('/feeds/:id', feedController.update);
 // router.delete('/feeds/:id', feedController.delete);
 
-router.route('/feeds').post(feedController.create)
+router.route('/feeds').post(auth,feedController.create)
     .get(feedController.getAll)
   
 
 router.route('/feeds/:id')
-    .put(feedController.update)
-    .delete(feedController.delete)
+    .put(auth,feedController.update)
+    .delete(auth,feedController.delete)
 
 module.exports = router;

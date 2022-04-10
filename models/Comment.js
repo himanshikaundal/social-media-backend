@@ -16,6 +16,10 @@ feed_id:{
 parentComment_id:{
     type:mongoose.Schema.Types.ObjectId,
     ref:'Comment',
+},
+createdby:{
+    type:mongoose.Schema.Types.ObjectId,
+    required:true
 }
 })
 module.exports=mongoose.model('Comment',commentSchema);

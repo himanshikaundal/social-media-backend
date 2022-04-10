@@ -16,14 +16,19 @@ module.exports = {
                 media: Joi.array().max(10).items(Joi.object({
                     type: Joi.string().required(),
                     url: Joi.string().required()
-                }))
+                })),
+             
             },
 
             )
 
             const { value, error } = schema.validate(req.body);
-
-            const feed = new Feed(value);
+            
+            const feed = new Feed({
+                content:value.content,
+                media:value.media
+            });
+           feed.createby=req.loggedInUser._id;
 
 
             const result = await feed.save();
@@ -40,6 +45,7 @@ module.exports = {
         try {
             const feed = await Feed.find();
             if (!feed) return next(createError(400, 'no such post exist'));
+            
             res.success(feed);
         }
         catch (error) {
