@@ -4,6 +4,7 @@ const Joi=require('joi');
 module.exports={
     like:async(req,res,next)=>{
 try{
+<<<<<<< HEAD
 
     const schema = Joi.object({
         reactions: Joi.string().required(),
@@ -13,6 +14,9 @@ try{
     const { error, value } = schema.validate(req.body);
     if (error) return next(error);
 
+=======
+       
+>>>>>>> b8d88f9d81bd21f2418aaec6d0ca5e86df2d3e82
     const result=new Likes({
         reactions:value.reactions,
         feed_id:req.params.id,
