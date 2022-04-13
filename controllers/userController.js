@@ -206,6 +206,19 @@ module.exports = {
     const mydetails = await User.find().select("-password");
     res.success(mydetails);
   },
+  searchUser: async(req,res,next)=>{
+    const id= req.params.id;
+    try{
+      const user = await User.findById({_id:id});
+      if (!user) return next(createError(400, "user not found"));
+      res.success(user);
+    }
+    catch(error){
+      return next(createError(500, error.message));
+    }
+    
+
+  },
   changePassword: async (req, res, next) => {
     try {
       const schema = Joi.object({
