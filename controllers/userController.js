@@ -8,6 +8,8 @@ const crypto = require("crypto");
 const Token = require("../models/Token");
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
+const Token = require("../models/Token");
+const { invalid } = require("joi");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -91,6 +93,7 @@ module.exports = {
     } catch (error) {
       return next(createError(500, error.message));
     }
+    //fire email---->> new account created
   },
   forgotpassword: async (req, res, next) => {
     try {
@@ -110,6 +113,7 @@ module.exports = {
         token: token
       });
 
+<<<<<<< HEAD
       if (!user) return next(createError(500, "User not found"));
       console.log(user);
       const link = `http://localhost:3000/reset-password/${user._id}/${tokens}`;
@@ -117,10 +121,22 @@ module.exports = {
         to: email,
         from: "himanshi.kaundal@tothenew.com",
         subject: "Password re-set email",
+=======
+    if (!user) return next(createError(500, "User not found"));
+    console.log(user);
+    const token = crypto.randomBytes(48).toString('hex'); 
+    
+    const link = `http://localhost:3001/reset-password/${token}`;
+    const msg = {
+      to: email,
+      from: "himanshi.kaundal@tothenew.com",
+      subject: "Password re-set email",
+>>>>>>> 4d82e6c9a21a272131683cedfbccd47239bc5862
 
         html: `<strong>click the link to reset the password ${link}</strong>`,
       };
 
+<<<<<<< HEAD
       await sgMail.send(msg);
       res.success(null, "link has been successfully shared with you");
     } catch (error) {
@@ -154,6 +170,55 @@ module.exports = {
     }
   },
 
+=======
+    await sgMail.send(msg)
+
+    const addToken = new Token({email:email,token:token});
+    addToken.save();
+
+    res.success(null,'link has been successfully shared with you')
+    }catch(error){
+      return next(createError(500, error.message));
+    }
+  },
+  
+  resetpassword:async(req,res)=>{
+
+    const schema = Joi.object({
+      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+    });
+    const { value, error } = schema.validate(req.body);
+    if (error) return next(createError(400, error.message));
+    console.log(value);
+    const password = value;
+    const token= req.params.token;
+    console.log(token);
+
+    const istoken= Token.findOne({token:token}) ;
+    if(!istoken) return next(createError(400, 'token not found'));
+    const {email} = istoken;
+    
+    var dateNow = new Date();
+    if(!(istoken.expiry < dateNow.getTime()/1000))
+      return next(createError(400,'link is invalid'));
+    
+    const user = await  User.findOne({ where: { email } });
+    if(!user) return next(createError(400,'user not found'));  
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashed = await bcryptjs.hash(password, salt);
+
+    user.password = hashed;
+    const addUser = await user.save();
+
+    res.success(addUser);
+    // token ---->email, find and check whether token is expired or not
+    // if token expire --> error -- link invalid
+    // else find user from email
+    // then hash new password and set it to user
+    // email fire--->> password has been successfully changed
+  },
+>>>>>>> 4d82e6c9a21a272131683cedfbccd47239bc5862
   editProfile: async (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().min(5).max(255).required(),
