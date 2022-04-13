@@ -7,6 +7,8 @@ const crypto = require('crypto');
 
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
+const Token = require("../models/Token");
+const { invalid } = require("joi");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -89,6 +91,7 @@ module.exports = {
     } catch (error) {
       return next(createError(500, error.message));
     }
+    //fire email---->> new account created
   },
   forgotpassword: async (req, res, next) => {
     try{
@@ -106,7 +109,9 @@ module.exports = {
 
     if (!user) return next(createError(500, "User not found"));
     console.log(user);
-    const link = `http://localhost:3000/reset-password/${user.id}/${token}`;
+    const token = crypto.randomBytes(48).toString('hex'); 
+    
+    const link = `http://localhost:3001/reset-password/${token}`;
     const msg = {
       to: email,
       from: "himanshi.kaundal@tothenew.com",
@@ -116,20 +121,51 @@ module.exports = {
     };
 
     await sgMail.send(msg)
+
+    const addToken = new Token({email:email,token:token});
+    addToken.save();
+
     res.success(null,'link has been successfully shared with you')
     }catch(error){
       return next(createError(500, error.message));
     }
-
-    const token = crypto.randomBytes(48).toString('hex');    
-
   },
   
   resetpassword:async(req,res)=>{
-    const{id,token}=req.body;
-    //verify token
-    let validId = await SignUp.findOne({_id:req.body.id});
-    if(!validId) return res.status(400).res.send('invalid id'); 
+
+    const schema = Joi.object({
+      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+    });
+    const { value, error } = schema.validate(req.body);
+    if (error) return next(createError(400, error.message));
+    console.log(value);
+    const password = value;
+    const token= req.params.token;
+    console.log(token);
+
+    const istoken= Token.findOne({token:token}) ;
+    if(!istoken) return next(createError(400, 'token not found'));
+    const {email} = istoken;
+    
+    var dateNow = new Date();
+    if(!(istoken.expiry < dateNow.getTime()/1000))
+      return next(createError(400,'link is invalid'));
+    
+    const user = await  User.findOne({ where: { email } });
+    if(!user) return next(createError(400,'user not found'));  
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashed = await bcryptjs.hash(password, salt);
+
+    user.password = hashed;
+    const addUser = await user.save();
+
+    res.success(addUser);
+    // token ---->email, find and check whether token is expired or not
+    // if token expire --> error -- link invalid
+    // else find user from email
+    // then hash new password and set it to user
+    // email fire--->> password has been successfully changed
   },
   editProfile: async (req, res, next) => {
     const schema = Joi.object({

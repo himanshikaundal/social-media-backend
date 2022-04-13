@@ -1,20 +1,14 @@
-
 const mongoose = require("mongoose");
 const User = require('../models/User');
 const tokenSchema = new mongoose.Schema({
-      // email:{
-      //   type:String,
-      //   required: true,
-      //   trim:true,
-      //   lowercase:true,
-      //   min:10,
-      //   max:255
-      // },
-      userId: {
-        type: mongoose.Schema.Types.ObjectId,
+      email:{
+        type:String,
         required: true,
-        ref: "User",
-    },
+        trim:true,
+        lowercase:true,
+        min:10,
+        max:255
+      },
       token:{
         type: String,
         required: true,
