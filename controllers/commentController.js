@@ -18,8 +18,10 @@ module.exports = {
       const comment = new Comment({
         comment: value.comment,
         feed_id: value.feed_id,
-        comment_id: value.comment_id,
+        comment_id: value.comment_id
       });
+
+      comment.createdby=req.loggedInUser._id;
       const result = await comment.save();
       res.success(result);
     } catch (error) {
@@ -30,8 +32,8 @@ module.exports = {
   listComment: async (req, res, next) => {
     try {
       const comments = await Comment.find({ feed_id: req.params.id }).select('comment -_id');
-      const user_id = req.loggedInUser._id;
-      res.success({ comments, });
+      
+      res.success(comments);
     }
 
     catch (error) {
@@ -66,6 +68,4 @@ module.exports = {
   }
 
 
-}
-
-  ;
+} ;

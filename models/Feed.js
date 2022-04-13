@@ -18,7 +18,11 @@ const feedSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    media: [mediaSchema]
+    media: [mediaSchema],
+    createby:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true
+    }
 
 
 }, { timestamps: true })

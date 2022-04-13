@@ -1,15 +1,16 @@
+const { string } = require('joi');
 const mongoose=require('mongoose');
 const requestSchema=new mongoose.Schema({
-sentRequest:[{
-    username: {type: String, default: ''}
-}],
-request: [{
-    userId: {type: mongoose.Schema.Types.ObjectId, ref: 'Users'},
-    username: {type: String, default: ''}
-}],
-friendsList: [{
-    friendId: {type: mongoose.Schema.Types.ObjectId, ref: 'Users'},
-    friendName: {type: String, default: ''}
-}]
+senderUserId:{
+    type:mongoose.Schema.Types.ObjectId,ref:'User'
+},
+
+receiverUserId: {
+ type: mongoose.Schema.Types.ObjectId, ref: 'User',
+},
+status:{
+    type:string,
+    enum:['REQUESTED','ACCEPTED']
+}
 });
 module.exports=mongoose.model('Request',requestSchema);

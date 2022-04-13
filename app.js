@@ -4,6 +4,9 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const logger = require('morgan');
 const createError = require('http-errors');
+var cors = require('cors')
+
+
 require('dotenv').config();
 
 
@@ -16,8 +19,9 @@ const commentRouter=require('./routes/comment');
 
 mongoose.connect(process.env.DB_STRING);
 
-const app = express();
 
+const app = express();
+app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

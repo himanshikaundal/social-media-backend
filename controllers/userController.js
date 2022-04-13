@@ -171,7 +171,7 @@ module.exports = {
       const { error, value } = schema.validate(req.body);
       const currentUser =req.loggedInUser;
       const userData = await User.findOne({ _id: currentUser._id });
-      if (!bcryptjs.compare(value.oldPassword, currentUser.password)) {
+      if (!await bcryptjs.compare(value.oldPassword, currentUser.password)) {
         return next(createError(500, error.message));
       } 
       const salt = await bcryptjs.genSalt(10);
@@ -182,7 +182,6 @@ module.exports = {
           user: userData,
       });
 
-      console.log(req.loggedInUser);
     } catch (error) {
       return next(createError(500, error.message));
     }
