@@ -3,7 +3,7 @@ const jsonwebtoken = require("jsonwebtoken");
 const Joi = require("joi");
 const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
-const crypto = require('crypto');
+const crypto = require("crypto");
 
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
@@ -42,7 +42,7 @@ module.exports = {
       ); // hash will be comes from db
       if (!isPasswordMatched)
         return next(createError(400, "Username and password is invalid"));
-      delete user.password
+      delete user.password;
       const token = jsonwebtoken.sign(
         {
           data: user, // user object
@@ -87,6 +87,17 @@ module.exports = {
       newUser.password = hashed;
       const addUser = await newUser.save();
 
+      const {email} = newUser;
+      const msg = {
+        to: email,
+        from: "himanshi.kaundal@tothenew.com",
+        subject: "Welcome to Buzz",
+
+        html: `<strong> You have successfully created your account</strong>`,
+      };
+
+      await sgMail.send(msg);
+
       res.success(addUser);
     } catch (error) {
       return next(createError(500, error.message));
@@ -94,65 +105,63 @@ module.exports = {
     //fire email---->> new account created
   },
   forgotpassword: async (req, res, next) => {
-    try{
+    try {
       const schema = Joi.object({
         email: Joi.string().min(5).max(255).required(),
-        
       });
 
-    const { error } = schema.validate(req.body);
-    if (error) return next(createError(400, error.message));
+      const { error } = schema.validate(req.body);
+      if (error) return next(createError(400, error.message));
 
-    const { email } = req.body;
-    
-    const user = await  User.findOne({ where: { email } });
+      const { email } = req.body;
 
-    if (!user) return next(createError(500, "User not found"));
-    console.log(user);
-    const token = crypto.randomBytes(48).toString('hex'); 
-    
-    const link = `http://localhost:3001/reset-password/${token}`;
-    const msg = {
-      to: email,
-      from: "himanshi.kaundal@tothenew.com",
-      subject: "Password re-set email",
+      const user = await User.findOne({ where: { email } });
 
-      html: `<strong>click the link to reset the password ${link}</strong>`,
-    };
+      if (!user) return next(createError(500, "User not found"));
+      console.log(user);
+      const token = crypto.randomBytes(48).toString("hex");
 
-    await sgMail.send(msg)
+      const link = `http://localhost:3001/reset-password/${token}`;
+      const msg = {
+        to: email,
+        from: "himanshi.kaundal@tothenew.com",
+        subject: "Password re-set email",
 
-    const addToken = new Token({email:email,token:token});
-    addToken.save();
+        html: `<strong>click the link to reset the password ${link}</strong>`,
+      };
 
-    res.success(null,'link has been successfully shared with you')
-    }catch(error){
+      await sgMail.send(msg);
+
+      const addToken = new Token({ email: email, token: token });
+      addToken.save();
+
+      res.success(null, "link has been successfully shared with you");
+    } catch (error) {
       return next(createError(500, error.message));
     }
   },
-  
-  resetpassword:async(req,res)=>{
 
+  resetpassword: async (req, res) => {
     const schema = Joi.object({
-      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
     });
     const { value, error } = schema.validate(req.body);
     if (error) return next(createError(400, error.message));
     console.log(value);
     const password = value;
-    const token= req.params.token;
+    const token = req.params.token;
     console.log(token);
 
-    const istoken= Token.findOne({token:token}) ;
-    if(!istoken) return next(createError(400, 'token not found'));
-    const {email} = istoken;
-    
+    const istoken = Token.findOne({ token: token });
+    if (!istoken) return next(createError(400, "token not found"));
+    const { email } = istoken;
+
     var dateNow = new Date();
-    if(!(istoken.expiry < dateNow.getTime()/1000))
-      return next(createError(400,'link is invalid'));
-    
-    const user = await  User.findOne({ where: { email } });
-    if(!user) return next(createError(400,'user not found'));  
+    if (!(istoken.expiry < dateNow.getTime() / 1000))
+      return next(createError(400, "link is invalid"));
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return next(createError(400, "user not found"));
 
     const salt = await bcryptjs.genSalt(10);
     const hashed = await bcryptjs.hash(password, salt);
@@ -205,19 +214,18 @@ module.exports = {
         confirmPassword: Joi.any().valid(Joi.ref("newPassword")).required(),
       });
       const { error, value } = schema.validate(req.body);
-      const currentUser =req.loggedInUser;
+      const currentUser = req.loggedInUser;
       const userData = await User.findOne({ _id: currentUser._id });
-      if (!await bcryptjs.compare(value.oldPassword, currentUser.password)) {
+      if (!(await bcryptjs.compare(value.oldPassword, currentUser.password))) {
         return next(createError(500, error.message));
-      } 
+      }
       const salt = await bcryptjs.genSalt(10);
       const hashed = await bcryptjs.hash(value.newPassword, salt);
       await User.updateOne({ _id: currentUser._id }, { password: hashed });
       res.success({
-          token: token,
-          user: userData,
+        token: token,
+        user: userData,
       });
-
     } catch (error) {
       return next(createError(500, error.message));
     }
