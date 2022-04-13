@@ -5,9 +5,9 @@ const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
 
+const Token = require("../models/Token");
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
-const Token = require("../models/Token");
 const { invalid } = require("joi");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -87,7 +87,7 @@ module.exports = {
       newUser.password = hashed;
       const addUser = await newUser.save();
 
-      const {email} = newUser;
+      const { email } = newUser;
       const msg = {
         to: email,
         from: "himanshi.kaundal@tothenew.com",
@@ -176,6 +176,7 @@ module.exports = {
     // then hash new password and set it to user
     // email fire--->> password has been successfully changed
   },
+
   editProfile: async (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().min(5).max(255).required(),
@@ -206,32 +207,32 @@ module.exports = {
     const mydetails = await User.find().select("-password");
     res.success(mydetails);
   },
-  searchUser: async(req,res,next)=>{
-    const id= req.params.id;
-    try{
-      const user = await User.findById({_id:id});
+  searchUser: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const user = await User.findById({ _id: id });
       if (!user) return next(createError(400, "user not found"));
       res.success(user);
-    }
-    catch(error){
+    } catch (error) {
       return next(createError(500, error.message));
     }
-    
-
   },
   changePassword: async (req, res, next) => {
     try {
       const schema = Joi.object({
-        oldPassword: Joi.string().required(),
-        newPassword: Joi.string().required(),
+        oldPassword: Joi.string().min(5).max(255).required(),
+        newPassword: Joi.string().min(5).max(255).required(),
         confirmPassword: Joi.any().valid(Joi.ref("newPassword")).required(),
       });
       const { error, value } = schema.validate(req.body);
       const currentUser = req.loggedInUser;
+
       const userData = await User.findOne({ _id: currentUser._id });
+
       if (!(await bcryptjs.compare(value.oldPassword, currentUser.password))) {
         return next(createError(500, error.message));
       }
+
       const salt = await bcryptjs.genSalt(10);
       const hashed = await bcryptjs.hash(value.newPassword, salt);
       await User.updateOne({ _id: currentUser._id }, { password: hashed });

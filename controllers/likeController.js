@@ -4,7 +4,7 @@ const Likes = require("../models/Likes")
 module.exports={
     like:async(req,res,next)=>{
 try{
-
+       
     const result=new Likes({
         reactions:req.body.reactions,
         feed_id:req.params.id,
