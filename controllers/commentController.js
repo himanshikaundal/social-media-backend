@@ -47,8 +47,11 @@ module.exports = {
 
   listComment: async (req, res, next) => {
     try {
-      const comments = await Comment.find({ feed_id: req.params.id }).select('comment -_id');
+      // const user=req.loggedInUser._id;
+      // if(!user) return res.error(next(createError()))
 
+      const comments = await Comment.find({ feed_id: req.params.id }).select('comment -_id');
+    
       res.success(comments);
     }
 

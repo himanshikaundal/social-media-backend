@@ -1,12 +1,19 @@
+const Joi = require("joi");
 const Dislike = require("../models/Dislike");
 const Likes = require("../models/Likes")
 
 module.exports={
     like:async(req,res,next)=>{
 try{
+    const schema = Joi.object({
+        reactions: Joi.string().required(),
+      });
+      const { error,value } = schema.validate(req.body);
+      if (error) return next(createError(400, error.message));
+  
        
     const result=new Likes({
-        reactions:req.body.reactions,
+        reactions:value.reactions,
         feed_id:req.params.id,
         comment_id:req.params.id,
         user_id:req.loggedInUser 

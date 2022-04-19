@@ -5,7 +5,7 @@ const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
 
-const Token = require("../models/Token");
+// const Token = require("../models/Token");
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
 const Token = require("../models/Token");
@@ -113,64 +113,19 @@ module.exports = {
         token: token
       });
 
-<<<<<<< HEAD
-      if (!user) return next(createError(500, "User not found"));
-      console.log(user);
-      const link = `http://localhost:3000/reset-password/${user._id}/${tokens}`;
-      const msg = {
-        to: email,
-        from: "himanshi.kaundal@tothenew.com",
-        subject: "Password re-set email",
-=======
     if (!user) return next(createError(500, "User not found"));
     console.log(user);
-    const token = crypto.randomBytes(48).toString('hex'); 
+    
     
     const link = `http://localhost:3001/reset-password/${token}`;
     const msg = {
       to: email,
       from: "himanshi.kaundal@tothenew.com",
       subject: "Password re-set email",
->>>>>>> 4d82e6c9a21a272131683cedfbccd47239bc5862
 
         html: `<strong>click the link to reset the password ${link}</strong>`,
       };
 
-<<<<<<< HEAD
-      await sgMail.send(msg);
-      res.success(null, "link has been successfully shared with you");
-    } catch (error) {
-      return next(createError(500, error.message));
-    }
-  },
-
-  resetpassword: async (req, res) => {
-    try {
-      const schema = Joi.object({ password: Joi.string().required() });
-      const { error } = schema.validate(req.body);
-      if (error) return next(createError(500, error.message));
-
-      const user = await User.findById(req.params.userId);
-      if (!user) return next(createError(400, "invalid link or expired"));
-
-      const token = await Token.findOne({
-        userId: user._id,
-        token: req.params.token,
-      });
-      if (!token) return next(createError(400, "invalid link or expired"));
-
-      user.password = req.body.password;
-      await user.save();
-      await token.delete();
-
-      res.success("password reset sucessfully.");
-    } catch (error) {
-      res.error(error);
-      //console.log(error);
-    }
-  },
-
-=======
     await sgMail.send(msg)
 
     const addToken = new Token({email:email,token:token});
@@ -218,7 +173,6 @@ module.exports = {
     // then hash new password and set it to user
     // email fire--->> password has been successfully changed
   },
->>>>>>> 4d82e6c9a21a272131683cedfbccd47239bc5862
   editProfile: async (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().min(5).max(255).required(),
@@ -230,7 +184,7 @@ module.exports = {
       country: Joi.string().max(20),
       city: Joi.string().max(20),
       website: Joi.string().max(50),
-      gender: Joi.string,
+      gender: Joi.string(),
       dob: Joi.date(),
     });
     const { error, value } = schema.validate(req.body);
