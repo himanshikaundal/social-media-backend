@@ -188,7 +188,7 @@ module.exports = {
       country: Joi.string().max(20),
       city: Joi.string().max(20),
       website: Joi.string().max(50),
-      gender: Joi.string,
+      gender: Joi.string(),
       dob: Joi.date(),
     });
     const { error, value } = schema.validate(req.body);
