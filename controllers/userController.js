@@ -4,14 +4,16 @@ const Joi = require("joi");
 const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
+const { OAuth2Client } = require('google-auth-library');
 
 // const Token = require("../models/Token");
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
-const Token = require("../models/Token");
 const { invalid } = require("joi");
+const { response } = require("express");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const client = new OAuth2Client('1063994885267-fqtfvile5mkkl8vl9gkv15tvjqp45hkf.apps.googleusercontent.com')
 
 module.exports = {
   login: async (req, res, next) => {
@@ -57,7 +59,6 @@ module.exports = {
         token: token,
         user: user,
       });
-      
     } catch (error) {
       return next(createError(500, error.message));
     }
@@ -89,6 +90,17 @@ module.exports = {
       newUser.password = hashed;
       const addUser = await newUser.save();
 
+      const { email } = newUser;
+      const msg = {
+        to: email,
+        from: "himanshi.kaundal@tothenew.com",
+        subject: "Welcome to Buzz",
+
+        html: `<strong> You have successfully created your account</strong>`,
+      };
+
+      await sgMail.send(msg);
+
       res.success(addUser);
     } catch (error) {
       return next(createError(500, error.message));
@@ -107,58 +119,52 @@ module.exports = {
       const { email } = req.body;
 
       const user = await User.findOne({ where: { email } });
-      const token = crypto.randomBytes(48).toString("hex");
-      const tokens = new Token({
-        userId: user._id,
-        token: token
-      });
 
-    if (!user) return next(createError(500, "User not found"));
-    console.log(user);
-    
-    
-    const link = `http://localhost:3001/reset-password/${token}`;
-    const msg = {
-      to: email,
-      from: "himanshi.kaundal@tothenew.com",
-      subject: "Password re-set email",
+      if (!user) return next(createError(500, "User not found"));
+      console.log(user);
+      const token = crypto.randomBytes(48).toString("hex");
+
+      const link = `http://localhost:3001/reset-password/${token}`;
+      const msg = {
+        to: email,
+        from: "himanshi.kaundal@tothenew.com",
+        subject: "Password re-set email",
 
         html: `<strong>click the link to reset the password ${link}</strong>`,
       };
 
-    await sgMail.send(msg)
+      await sgMail.send(msg);
 
-    const addToken = new Token({email:email,token:token});
-    addToken.save();
+      const addToken = new Token({ email: email, token: token });
+      addToken.save();
 
-    res.success(null,'link has been successfully shared with you')
-    }catch(error){
+      res.success(null, "link has been successfully shared with you");
+    } catch (error) {
       return next(createError(500, error.message));
     }
   },
-  
-  resetpassword:async(req,res)=>{
 
+  resetpassword: async (req, res) => {
     const schema = Joi.object({
-      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
+      password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
     });
     const { value, error } = schema.validate(req.body);
     if (error) return next(createError(400, error.message));
     console.log(value);
     const password = value;
-    const token= req.params.token;
+    const token = req.params.token;
     console.log(token);
 
-    const istoken= Token.findOne({token:token}) ;
-    if(!istoken) return next(createError(400, 'token not found'));
-    const {email} = istoken;
-    
+    const istoken = Token.findOne({ token: token });
+    if (!istoken) return next(createError(400, "token not found"));
+    const { email } = istoken;
+
     var dateNow = new Date();
-    if(!(istoken.expiry < dateNow.getTime()/1000))
-      return next(createError(400,'link is invalid'));
-    
-    const user = await  User.findOne({ where: { email } });
-    if(!user) return next(createError(400,'user not found'));  
+    if (!(istoken.expiry < dateNow.getTime() / 1000))
+      return next(createError(400, "link is invalid"));
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return next(createError(400, "user not found"));
 
     const salt = await bcryptjs.genSalt(10);
     const hashed = await bcryptjs.hash(password, salt);
@@ -203,6 +209,16 @@ module.exports = {
     const mydetails = await User.find().select("-password");
     res.success(mydetails);
   },
+  searchUser: async (req, res, next) => {
+    const id = req.params.id;
+    try {
+      const user = await User.findById({ _id: id });
+      if (!user) return next(createError(400, "user not found"));
+      res.success(user);
+    } catch (error) {
+      return next(createError(500, error.message));
+    }
+  },
   changePassword: async (req, res, next) => {
     try {
       const schema = Joi.object({
@@ -226,9 +242,72 @@ module.exports = {
         token: token,
         user: userData,
       });
-
     } catch (error) {
       return next(createError(500, error.message));
     }
   },
+
+  googleLogin: async (req, res, next) => {
+
+
+    try{
+      const { token } = req.body;
+      const data = await client.verifyIdToken({ idToken: token, audience: '1063994885267-fqtfvile5mkkl8vl9gkv15tvjqp45hkf.apps.googleusercontent.com' });
+      console.log(data);
+  
+      const { email} = data.getPayload();
+      User.findOne({ email: email }).exec(async(err, user) => {
+        if (user) {
+  
+          const token = jsonwebtoken.sign(
+            {
+              data: user, // user object
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+          );
+  
+          res.success({
+            token: token,
+            user: user,
+          });
+  
+  
+        }
+        else {
+          let password = user.email + JWT_SECRET;
+          let username = awesome + user.given_name
+          const newuser = new User({
+            name: user.name,
+            username: username,
+            email: user.email,
+            password: password,
+  
+          })
+          const user = await newuser.save();
+          const token = jsonwebtoken.sign(
+            {
+              data: user, // user object
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+          );
+  
+          res.success({
+            token: token,
+            user: user,
+          });
+  
+        }
+      })
+
+    }
+    catch(err){
+      res.error(err);
+    }
+   
+  }
+
+
+
 };
