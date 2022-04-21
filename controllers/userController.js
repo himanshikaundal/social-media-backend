@@ -4,6 +4,7 @@ const Joi = require("joi");
 const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
+const { OAuth2Client } = require('google-auth-library');
 
 const Token = require("../models/Token");
 const User = require("../models/User");
@@ -242,6 +243,60 @@ module.exports = {
       });
     } catch (error) {
       return next(createError(500, error.message));
+    }
+  },
+
+  googleLogin: async (req, res, next) => {
+    try {
+      const { token } = req.body;
+      const data = await client.verifyIdToken({
+        idToken: token,
+        audience:
+          "1063994885267-fqtfvile5mkkl8vl9gkv15tvjqp45hkf.apps.googleusercontent.com",
+      });
+      console.log(data);
+
+      const { email } = data.getPayload();
+      User.findOne({ email: email }).exec(async (err, user) => {
+        if (user) {
+          const token = jsonwebtoken.sign(
+            {
+              data: user, // user object
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+          );
+
+          res.success({
+            token: token,
+            user: user,
+          });
+        } else {
+          let password = user.email + JWT_SECRET;
+          let username = awesome + user.given_name;
+          const newuser = new User({
+            name: user.name,
+            username: username,
+            email: user.email,
+            password: password,
+          });
+          const user = await newuser.save();
+          const token = jsonwebtoken.sign(
+            {
+              data: user, // user object
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRY }
+          );
+
+          res.success({
+            token: token,
+            user: user,
+          });
+        }
+      });
+    } catch (err) {
+      res.error(err);
     }
   },
 };
