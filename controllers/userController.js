@@ -4,14 +4,18 @@ const Joi = require("joi");
 const bcryptjs = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const crypto = require("crypto");
-const { OAuth2Client } = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 
-const Token = require("../models/Token");
+// const Token = require("../models/Token");
 const User = require("../models/User");
 const { updateOne } = require("../models/User");
 const { invalid } = require("joi");
+const { response } = require("express");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const client = new OAuth2Client(
+  "1063994885267-fqtfvile5mkkl8vl9gkv15tvjqp45hkf.apps.googleusercontent.com"
+);
 
 module.exports = {
   login: async (req, res, next) => {
@@ -65,7 +69,7 @@ module.exports = {
     const schema = Joi.object({
       name: Joi.string().min(5).max(255).required(),
       username: Joi.string().min(5).max(255).required(),
-      email: Joi.string().min(5).max(255).required(),
+      email: Joi.string().email().min(5).max(255).required(),
       password: Joi.string().min(5).max(255).required(),
     });
     const { error } = schema.validate(req.body);
@@ -108,7 +112,7 @@ module.exports = {
   forgotpassword: async (req, res, next) => {
     try {
       const schema = Joi.object({
-        email: Joi.string().min(5).max(255).required(),
+        email: Joi.string().email().min(5).max(255).required(),
       });
 
       const { error } = schema.validate(req.body);
@@ -177,11 +181,10 @@ module.exports = {
     // then hash new password and set it to user
     // email fire--->> password has been successfully changed
   },
-
   editProfile: async (req, res, next) => {
     const schema = Joi.object({
       name: Joi.string().min(5).max(255).required(),
-      email: Joi.string().min(5).max(255).required(),
+      email: Joi.string().email().min(5).max(255).required(),
       profilePicture: Joi.string().max(1),
       coverPicture: Joi.string().max(1),
       headline: Joi.string().max(255),
@@ -248,6 +251,7 @@ module.exports = {
 
   googleLogin: async (req, res, next) => {
     try {
+      //receive token from frontend
       const { token } = req.body;
       const data = await client.verifyIdToken({
         idToken: token,
@@ -256,8 +260,9 @@ module.exports = {
       });
       console.log(data);
 
-      const { email } = data.getPayload();
-      User.findOne({ email: email }).exec(async (err, user) => {
+      const { email,name,given_name } = data.getPayload();
+      console.log(email);
+      User.findOne({email: email }).exec(async (err, user) => {
         if (user) {
           const token = jsonwebtoken.sign(
             {
@@ -272,12 +277,14 @@ module.exports = {
             user: user,
           });
         } else {
-          let password = user.email + JWT_SECRET;
-          let username = awesome + user.given_name;
+          //new user
+          
+          let password = email + process.env.JWT_SECRET;
+          let username = 'awesome' + given_name;
           const newuser = new User({
-            name: user.name,
+            name: name,
             username: username,
-            email: user.email,
+            email: email,
             password: password,
           });
           const user = await newuser.save();

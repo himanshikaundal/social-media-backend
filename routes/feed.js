@@ -1,7 +1,7 @@
 const express = require('express');
 const { getAll } = require('../controllers/feedController');
 const auth=require('../middlewares/auth');
-
+const upload=require('../utils/multerHandler');
 const feedController = require('../controllers/feedController');
 
 const router = express.Router();
@@ -14,7 +14,6 @@ const router = express.Router();
 
 router.route('/feeds').post(auth,feedController.create)
     .get(feedController.getAll)
-  
 
 router.route('/feeds/:id')
     .put(auth,feedController.update)

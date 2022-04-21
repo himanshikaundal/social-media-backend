@@ -4,14 +4,16 @@ const mediaSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: ['IMAGE', 'VIDEO'],
-        required: true,
+        required: false,
     },
     url: {
         type: String,
-        required: true
+        required: false,
     }
 
 })
+
+
 
 const feedSchema = new mongoose.Schema({
     content: {
@@ -21,7 +23,7 @@ const feedSchema = new mongoose.Schema({
     media: [mediaSchema],
     createby:{
         type:mongoose.Schema.Types.ObjectId,
-        required:true
+        required:true,
     }
 
 
