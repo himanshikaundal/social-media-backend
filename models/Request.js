@@ -1,16 +1,34 @@
-const { string } = require('joi');
-const mongoose=require('mongoose');
-const requestSchema=new mongoose.Schema({
-senderUserId:{
-    type:mongoose.Schema.Types.ObjectId,ref:'User'
-},
+const mongoose = require("mongoose");
+const User = require("./User");
 
-receiverUserId: {
- type: mongoose.Schema.Types.ObjectId, ref: 'User',
-},
-status:{
-    type:string,
-    enum:['REQUESTED','ACCEPTED']
-}
+const requestSchema = new mongoose.Schema({
+  sentRequest: [
+    {
+      username: {
+        type: String,
+      },
+    },
+  ],
+  recieved: [
+    {
+      username: {
+        type: String,
+      },
+      user_id: {
+        type: mongoose.Schema.Types.ObjectId,
+      },
+    },
+  ],
+  friendList: [
+    {
+      friendId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      friendName: String,
+    },
+  ],
+  totalRequest: {
+    type: Number,
+  },
 });
-module.exports=mongoose.model('Request',requestSchema);

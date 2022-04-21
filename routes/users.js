@@ -14,5 +14,4 @@ router.get('/me',userController.getMe);
 router.get('/searchUser/:id', userController.searchUser);
 router.post('/change-password',auth,userController.changePassword);
 router.post('/google-login',userController.googleLogin);
-
 module.exports = router;
