@@ -1,5 +1,5 @@
 const createError = require('http-errors');
-const cloudinary=require('../utils/cloudinaryHandler')
+
 const Feed = require('../models/Feed')
 const Joi = require('joi');
 
@@ -18,16 +18,14 @@ module.exports = {
             },
 
             )
+           
 
-
-            // const info=await cloudinary.uploader.upload(req.file.path);
-            // console.log(info);
-            
             const { value, error } = schema.validate(req.body);
+            console.log(req.file);
 
             const feed = new Feed({
                 content: value.content,
-                media: value.media
+                media: req.file
             });
             feed.createby = req.loggedInUser._id;
 
