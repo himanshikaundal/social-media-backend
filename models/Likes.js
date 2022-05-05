@@ -4,11 +4,11 @@ const Comment=require('./Comment');
 const likeSchema = new mongoose.Schema({
     reaction:{
         type:String,
-        enum:[HAPPY,SAD,ANGRY,WOW]
+          enum:['HAPPY','SAD','ANGRY','WOW']
     },
     feedId:{
         type:mongoose.Schema.Types.ObjectId,
-        required:true,
+        required:false,
         ref:'Feed'
     },
     commentId:{
@@ -18,11 +18,11 @@ const likeSchema = new mongoose.Schema({
     },
     userId:{
         type:mongoose.Schema.Types.ObjectId,
-        required:true,
+        required:false,
         ref:'User'
     }
     
     
 })
 
-module.exports=mongoose.model('Likes',likeSchema);
+module.exports=mongoose.model('Like',likeSchema);

@@ -20,6 +20,7 @@ const usersRouter = require('./routes/users');
 const feedRouter=require('./routes/feed');
 const commentRouter=require('./routes/comment');
 const Feed = require('./models/Feed');
+const like = require('./routes/likes');
 
 mongoose.connect(process.env.DB_STRING);
 
@@ -82,6 +83,7 @@ app.use('/api', indexRouter);
 app.use('/api', usersRouter);
 app.use('/api',feedRouter);
 app.use('/api',commentRouter);
+app.use('/api',like);
 
 
 app.use((req, res, next) => {
