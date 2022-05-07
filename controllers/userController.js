@@ -138,7 +138,7 @@ module.exports = {
       await sgMail.send(msg);
 
       const addToken = new Token({ email: email, token: token });
-      addToken.save();
+      await addToken.save();
 
       res.success(null, "link has been successfully shared with you");
     } catch (error) {
