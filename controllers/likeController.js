@@ -8,9 +8,7 @@ try{
 
    
     const schema = Joi.object({
-        reactions: Joi.string().required(),
-        feed_id: Joi.string().required(),
-        comment_id: Joi.string(),
+        reactions: Joi.string().required()
     });
     const { error, value } = schema.validate(req.body);
     if (error) return next(error);
@@ -34,7 +32,7 @@ catch(error){
 ,
 dislike:async(req,res,next)=>{
     try{
-        const remove=await Likes.findByIdAndDelete(req.params.id);
+        const remove=await Likes.findByIdAndDelete({user_id:req.params.id});
         await remove.save();
         res.success(remove);
     }

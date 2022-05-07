@@ -1,7 +1,8 @@
 const createError = require('http-errors');
-
+const cloudinary = require('../utils/cloudinaryHandler');
 const Feed = require('../models/Feed')
 const Joi = require('joi');
+
 
 
 module.exports = {
@@ -18,20 +19,43 @@ module.exports = {
             },
 
             )
-           
-
             const { value, error } = schema.validate(req.body);
-            console.log(req.file);
+            var url = [];
+             console.log(req.files);
+            for (var i = 0; i < req.files.length; i++) {
+                var locaFilePath = req.files[i].path;
+                const cloud = await cloudinary.uploader.upload(locaFilePath, { folder: 'images', use_filename: true });
+                url.push(cloud.secure_url);
+            }
+            console.log(url);
 
+            // req.files.forEach(async (element) => {
+            //     const cloud = await cloudinary.uploader.upload(element.path, { folder: 'images', use_filename: true });
+
+
+            // })
             const feed = new Feed({
                 content: value.content,
-                media: req.file
+                createby: req.loggedInUser.username
+
             });
-            feed.createby = req.loggedInUser._id;
+
+            url.forEach(element => {
+                feed.media.push({ url: element });
+            });
 
             const result = await feed.save();
             res.success(result);
 
+
+
+            // function depend(cloud) {
+            //     return new Promise((res, rej) => {
+
+
+
+            //     })
+            // }
         }
         catch (error) {
             return next(error);
@@ -43,7 +67,7 @@ module.exports = {
         try {
             const feed = await Feed.find();
             if (!feed) return next(createError(400, 'no such post exist'));
-
+        
             res.success(feed);
         }
         catch (error) {
@@ -64,6 +88,7 @@ module.exports = {
             })
 
             const { value, error } = schema.validate(req.body);
+
 
             const result = await Feed.findByIdAndUpdate(req.params.id, value, { new: true })
 

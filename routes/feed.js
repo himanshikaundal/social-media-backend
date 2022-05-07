@@ -12,7 +12,7 @@ const router = express.Router();
 // router.put('/feeds/:id', feedController.update);
 // router.delete('/feeds/:id', feedController.delete);
 
-router.route('/feeds').post(auth,upload.array('image',10),feedController.create)
+router.route('/feeds').post(auth,upload.array('media'),feedController.create)
     .get(feedController.getAll)
 
 router.route('/feeds/:id')
