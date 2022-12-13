@@ -11,8 +11,10 @@ const User = require("../models/User");
 const { updateOne } = require("../models/User");
 const { invalid } = require("joi");
 const { response } = require("express");
+const { picture } = require("../utils/cloudinaryHandler");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 const client = new OAuth2Client(
   "1063994885267-fqtfvile5mkkl8vl9gkv15tvjqp45hkf.apps.googleusercontent.com"
 );
@@ -286,6 +288,7 @@ module.exports = {
             username: username,
             email: email,
             password: password,
+            profilePicture:picture,
           });
           const user = await newuser.save();
           const token = jsonwebtoken.sign(
